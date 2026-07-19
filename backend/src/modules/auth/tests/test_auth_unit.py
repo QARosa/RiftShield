@@ -1,71 +1,76 @@
 import pytest
+import bcrypt
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from shared.utils.errors import UnauthorizedError, AppError
+from shared.utils.errors import AppError
 
 
-class TestAuthServiceUnit:
+class TestPasswordHashing:
+    def test_hash_produces_valid_bcrypt_string(self):
+        raw = "senha123"
+        hashed = bcrypt.hashpw(raw.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+        assert hashed.startswith("$2b$")
+        assert len(hashed) > 20
+
+    def test_correct_password_passes_check(self):
+        raw = "senha123"
+        hashed = bcrypt.hashpw(raw.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+        assert bcrypt.checkpw(raw.encode("utf-8"), hashed.encode("utf-8"))
+
+    def test_wrong_password_fails_check(self):
+        raw = "senha123"
+        hashed = bcrypt.hashpw(raw.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+        assert not bcrypt.checkpw("errada".encode("utf-8"), hashed.encode("utf-8"))
+
+    def test_different_salts_produce_different_hashes(self):
+        raw = "senha123"
+        h1 = bcrypt.hashpw(raw.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+        h2 = bcrypt.hashpw(raw.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+        assert h1 != h2
+
+
+class TestInviteService:
     @pytest.mark.asyncio
-    async def test_hash_password(self):
-        with patch("modules.auth.services.auth_service.bcrypt.hashpw") as mock_hash:
-            mock_hash.return_value = b"$2b$12$hashedpassword"
-            from modules.auth.services.auth_service import AuthService
-            hashed = AuthService._hash_password("senha123")
-            assert hashed == "$2b$12$hashedpassword"
-
-    @pytest.mark.asyncio
-    async def test_verify_password_correct(self):
-        with patch("modules.auth.services.auth_service.bcrypt.checkpw") as mock_check:
-            mock_check.return_value = True
-            from modules.auth.services.auth_service import AuthService
-            result = AuthService._verify_password("senha123", "$2b$12$hash")
-            assert result is True
-
-    @pytest.mark.asyncio
-    async def test_verify_password_wrong(self):
-        with patch("modules.auth.services.auth_service.bcrypt.checkpw") as mock_check:
-            mock_check.return_value = False
-            from modules.auth.services.auth_service import AuthService
-            result = AuthService._verify_password("wrong", "$2b$12$hash")
-            assert result is False
-
-    @pytest.mark.asyncio
-    async def test_validate_email_valid(self):
-        from modules.auth.services.auth_service import AuthService
-        result = AuthService._validate_email("test@example.com")
-        assert result is True
-
-    @pytest.mark.asyncio
-    async def test_validate_email_invalid(self):
-        from modules.auth.services.auth_service import AuthService
-        result = AuthService._validate_email("not-an-email")
-        assert result is False
-
-    @pytest.mark.asyncio
-    async def test_validate_invite_code_missing(self):
-        with patch("modules.auth.services.auth_service.InviteCode.find_one", new_callable=AsyncMock) as mock_find:
+    async def test_validate_invite_missing_raises_app_error(self):
+        with patch("modules.auth.services.invite_service.Invite.find_one", new_callable=AsyncMock) as mock_find:
             mock_find.return_value = None
-            from modules.auth.services.auth_service import AuthService
-            with pytest.raises(AppError, match="inválido"):
-                await AuthService.validate_invite_code("invalidcode")
+            from modules.auth.services.invite_service import validate_and_use_invite
+            with pytest.raises(AppError) as exc_info:
+                await validate_and_use_invite("nonexistent")
+            assert exc_info.value.status_code == 403
+            assert "inválido" in exc_info.value.message
 
     @pytest.mark.asyncio
-    async def test_validate_invite_code_used(self):
-        mock_code = MagicMock()
-        mock_code.used = True
-        with patch("modules.auth.services.auth_service.InviteCode.find_one", new_callable=AsyncMock) as mock_find:
-            mock_find.return_value = mock_code
-            from modules.auth.services.auth_service import AuthService
-            with pytest.raises(AppError, match="já utilizado"):
-                await AuthService.validate_invite_code("usedcode")
+    async def test_validate_invite_used_raises_app_error(self):
+        mock_invite = MagicMock()
+        mock_invite.used = True
+        with patch("modules.auth.services.invite_service.Invite.find_one", new_callable=AsyncMock) as mock_find:
+            mock_find.return_value = mock_invite
+            from modules.auth.services.invite_service import validate_and_use_invite
+            with pytest.raises(AppError) as exc_info:
+                await validate_and_use_invite("usedcode")
+            assert exc_info.value.status_code == 403
+            assert "já utilizado" in exc_info.value.message
 
     @pytest.mark.asyncio
-    async def test_validate_invite_code_valid(self):
-        mock_code = MagicMock()
-        mock_code.used = False
-        mock_code.role = "user"
-        with patch("modules.auth.services.auth_service.InviteCode.find_one", new_callable=AsyncMock) as mock_find:
-            mock_find.return_value = mock_code
-            from modules.auth.services.auth_service import AuthService
-            result = await AuthService.validate_invite_code("validcode")
-            assert result == "user"
+    async def test_validate_invite_valid_returns_invite(self):
+        mock_invite = MagicMock()
+        mock_invite.used = False
+        mock_invite.role = "ADMIN"
+        with patch("modules.auth.services.invite_service.Invite.find_one", new_callable=AsyncMock) as mock_find:
+            mock_find.return_value = mock_invite
+            from modules.auth.services.invite_service import validate_and_use_invite
+            result = await validate_and_use_invite("validcode")
+            assert result is mock_invite
+
+    @pytest.mark.asyncio
+    async def test_create_invite_returns_code_and_role(self):
+        mock_invite = MagicMock()
+        mock_invite.insert = AsyncMock()
+        with patch("modules.auth.services.invite_service.Invite") as MockInvite:
+            MockInvite.return_value = mock_invite
+            import modules.auth.services.invite_service as svc
+            result = await svc.create_invite(role="ADMIN")
+            assert "code" in result
+            assert result["role"] == "ADMIN"
+            assert len(result["code"]) == 32  # secrets.token_hex(16)

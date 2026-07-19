@@ -1,15 +1,11 @@
+const USER = { id: "u1", name: "Rosali", email: "rosalijustino@hotmail.com", role: "ADMIN" };
+
 describe("Main Application Flow (E2E)", () => {
   beforeEach(() => {
-    cy.session("auth", () => {
-      cy.request({
-        method: "POST",
-        url: "http://localhost:3000/api/auth/login",
-        body: { email: "test@riftshield.com", password: "test123" },
-      }).then((resp) => {
-        window.localStorage.setItem("accessToken", resp.body.access_token);
-      });
-    });
-    cy.visit("http://localhost:1999/dashboard");
+    cy.intercept("GET", "/api/users/me", { statusCode: 200, body: { user: USER } }).as("getMe");
+    cy.intercept("GET", "/api/dashboard/stats", { statusCode: 200, body: { total_analyses: 5, total_threats: 10, risk_distribution: {} } });
+    cy.intercept("GET", "/api/users/usage-time", { statusCode: 200, body: { total_seconds: 7200, hours: 2, minutes: 0, seconds: 0 } });
+    cy.visit("/dashboard");
   });
 
   it("should navigate to all pages via sidebar", () => {

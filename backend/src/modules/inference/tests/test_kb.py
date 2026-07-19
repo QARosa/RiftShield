@@ -31,7 +31,11 @@ def _make_mock_vuln(**overrides):
     mock.id = overrides.get("id", "vuln1")
     mock.cve_id = overrides.get("cve_id", "CWE-89")
     mock.title = "SQL Injection"
+    mock.title_pt = "Injeção SQL"
+    mock.title_en = "SQL Injection"
     mock.description = "Test description"
+    mock.description_pt = "Descrição de teste"
+    mock.description_en = "Test description"
     mock.cvss_score = 9.0
     mock.cwe = "CWE-89"
     mock.affected_components = ["api", "database"]
@@ -45,9 +49,15 @@ def _make_mock_countermeasure(**overrides):
     mock = MagicMock()
     mock.id = overrides.get("id", "cm1")
     mock.title = "Parameterized Queries"
+    mock.title_pt = "Consultas Parametrizadas"
+    mock.title_en = "Parameterized Queries"
     mock.description = "Use parameterized queries"
+    mock.description_pt = "Use consultas parametrizadas"
+    mock.description_en = "Use parameterized queries"
     mock.priority = "critical"
     mock.implementation_guide = "Use ORM"
+    mock.implementation_guide_pt = "Use ORM"
+    mock.implementation_guide_en = "Use ORM"
     mock.references = ["https://example.com"]
     mock.vulnerability_cwe_ids = ["CWE-89"]
     mock.created_at = datetime(2026, 6, 9, 0, 0, 0)
@@ -57,10 +67,11 @@ def _make_mock_countermeasure(**overrides):
 class TestKBVulnerabilities:
     async def test_list_vulnerabilities(self, app: FastAPI):
         with patch(
-            "modules.inference.services.kb_service.list_vulnerabilities",
+            "modules.inference.controllers.kb_controller.kb_service.list_vulnerabilities",
             new_callable=AsyncMock,
             return_value=([_make_mock_vuln()], 1),
-        ):
+        ) as mock_svc:
+            mock_svc.return_value = ([_make_mock_vuln()], 1)
             async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test", cookies={"accessToken": "x"}) as c:
                 r = await c.get("/api/kb/vulnerabilities")
                 assert r.status_code == 200
@@ -70,7 +81,7 @@ class TestKBVulnerabilities:
 
     async def test_list_vulnerabilities_filtered(self, app: FastAPI):
         with patch(
-            "modules.inference.services.kb_service.list_vulnerabilities",
+            "modules.inference.controllers.kb_controller.kb_service.list_vulnerabilities",
             new_callable=AsyncMock,
             return_value=([_make_mock_vuln()], 1),
         ):
@@ -80,7 +91,7 @@ class TestKBVulnerabilities:
 
     async def test_list_vulnerabilities_empty(self, app: FastAPI):
         with patch(
-            "modules.inference.services.kb_service.list_vulnerabilities",
+            "modules.inference.controllers.kb_controller.kb_service.list_vulnerabilities",
             new_callable=AsyncMock,
             return_value=([], 0),
         ):
@@ -98,7 +109,7 @@ class TestKBVulnerabilities:
 class TestKBCountermeasures:
     async def test_list_countermeasures(self, app: FastAPI):
         with patch(
-            "modules.inference.services.kb_service.list_countermeasures",
+            "modules.inference.controllers.kb_controller.kb_service.list_countermeasures",
             new_callable=AsyncMock,
             return_value=([_make_mock_countermeasure()], 1),
         ):
@@ -107,11 +118,12 @@ class TestKBCountermeasures:
                 assert r.status_code == 200
                 data = r.json()
                 assert data["total"] == 1
-                assert data["items"][0]["title"] == "Parameterized Queries"
+                # title field returns title_pt when lang=pt-BR (default)
+                assert data["items"][0]["title"] in ("Parameterized Queries", "Consultas Parametrizadas")
 
     async def test_list_countermeasures_filtered(self, app: FastAPI):
         with patch(
-            "modules.inference.services.kb_service.list_countermeasures",
+            "modules.inference.controllers.kb_controller.kb_service.list_countermeasures",
             new_callable=AsyncMock,
             return_value=([_make_mock_countermeasure()], 1),
         ):

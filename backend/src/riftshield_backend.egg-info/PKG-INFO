@@ -1,0 +1,20 @@
+Metadata-Version: 2.4
+Name: riftshield-backend
+Version: 0.1.0
+Summary: RiftShield Backend - Auth Module
+Requires-Python: >=3.11
+Requires-Dist: fastapi>=0.115.0
+Requires-Dist: uvicorn[standard]>=0.34.0
+Requires-Dist: beanie>=1.28.0
+Requires-Dist: motor>=3.6.0
+Requires-Dist: pydantic-settings>=2.7.0
+Requires-Dist: pyjwt>=2.10.0
+Requires-Dist: passlib[bcrypt]>=1.7.4
+Requires-Dist: python-dotenv>=1.0.0
+Requires-Dist: email-validator>=2.2.0
+Provides-Extra: dev
+Requires-Dist: mypy>=1.13.0; extra == "dev"
+Requires-Dist: ruff>=0.8.0; extra == "dev"
+Requires-Dist: pytest>=8.3.0; extra == "dev"
+Requires-Dist: pytest-asyncio>=0.25.0; extra == "dev"
+Requires-Dist: httpx>=0.28.0; extra == "dev"

@@ -27,25 +27,27 @@ class TestInferenceFunctionalFlow:
     async def test_full_inference_flow(self, app_client, mock_user):
         app.dependency_overrides[get_current_user] = lambda: mock_user
 
+        from datetime import datetime
         files = {"file": ("diagram.png", b"fake-image-data", "image/png")}
-        with patch("modules.inference.controllers.inference_controller.InferenceResult") as MockInf:
-            mock_inf = MagicMock()
-            mock_inf.id = "inf123"
-            mock_inf.filename = "diagram.png"
-            mock_inf.status = "completed"
-            mock_inf.components = [{"label": "api", "confidence": 0.9}]
-            mock_inf.processing_time_ms = 100
-            mock_inf.fallback_used = False
-            mock_inf.created_at = None
-            mock_inf.insert = AsyncMock()
-            MockInf.return_value = mock_inf
+        mock_inf = MagicMock()
+        mock_inf.id = "inf123"
+        mock_inf.filename = "diagram.png"
+        mock_inf.status = "completed"
+        mock_inf.components = [MagicMock(class_id=0, label="api", confidence=0.9, bbox=[0, 0, 10, 10])]
+        mock_inf.processing_time_ms = 100
+        mock_inf.fallback_used = False
+        mock_inf.created_at = datetime(2026, 1, 1)
+        mock_inf.insert = AsyncMock()
 
-            with patch("modules.inference.controllers.inference_controller.run_inference") as mock_run:
-                mock_run.return_value = ([{"label": "api", "confidence": 0.9}], 100, False)
-                response = await app_client.post("/api/inference/analyze", files=files)
-                assert response.status_code in (200, 201)
-                data = response.json()
-                assert "components" in data or "id" in data
+        with patch(
+            "modules.inference.controllers.inference_controller.inference_service.analyze_diagram",
+            new_callable=AsyncMock,
+            return_value=mock_inf,
+        ):
+            response = await app_client.post("/api/inference/analyze", files=files)
+            assert response.status_code in (200, 201)
+            data = response.json()
+            assert "components" in data or "id" in data
 
         app.dependency_overrides.clear()
 

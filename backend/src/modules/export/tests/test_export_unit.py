@@ -63,11 +63,17 @@ class TestExportServiceUnit:
     @pytest.mark.asyncio
     async def test_export_unsupported_format(self):
         from modules.export.services.export_service import export_data
-        result = await export_data(
-            user_id="user123",
-            sections=["inferences"],
-            fmt="xml",
-        )
+        with patch("modules.export.services.export_service._get_inferences", new_callable=AsyncMock, return_value=[]), \
+             patch("modules.export.services.export_service._get_threats", new_callable=AsyncMock, return_value=[]), \
+             patch("modules.export.services.export_service._get_dataset", new_callable=AsyncMock, return_value=[]), \
+             patch("modules.export.services.export_service._get_vulnerabilities", new_callable=AsyncMock, return_value=[]), \
+             patch("modules.export.services.export_service._get_countermeasures", new_callable=AsyncMock, return_value=[]), \
+             patch("modules.export.services.export_service._get_training_logs", new_callable=AsyncMock, return_value=[]):
+            result = await export_data(
+                user_id="user123",
+                sections=["inferences"],
+                fmt="xml",
+            )
         assert "error" in result
         assert "não suportado" in result["error"]
 

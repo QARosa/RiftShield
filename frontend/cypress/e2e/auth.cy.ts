@@ -1,6 +1,7 @@
 describe("Auth Flow (E2E)", () => {
   beforeEach(() => {
-    cy.visit("http://localhost:1999");
+    // No auth needed — these tests exercise the login page directly
+    cy.visit("/");
   });
 
   it("should show login form", () => {

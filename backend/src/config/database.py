@@ -23,4 +23,4 @@ async def init_database(database_url: str) -> None:
         User, Invite, DatasetEntry, InferenceResult, TrainingLog, ThreatReport,
         KBVulnerability, KBCountermeasure, HermesMessage, HermesConfig, AttackSimulation, ComparisonLog,
     ])
-    print("📦 Conectado ao MongoDB")
+    print("[DB] Conectado ao MongoDB")

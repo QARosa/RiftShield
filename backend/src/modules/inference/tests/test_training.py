@@ -44,13 +44,7 @@ def _make_mock_log(**overrides):
 class TestTraining:
     async def test_start_training(self, app: FastAPI):
         with patch(
-            "modules.inference.services.training_service.TrainingLog.insert",
-            new_callable=AsyncMock,
-        ), patch(
-            "modules.inference.services.training_service.TrainingLog.save",
-            new_callable=AsyncMock,
-        ), patch(
-            "modules.inference.services.training_service.start_training",
+            "modules.inference.controllers.training_controller.training_service.fine_tune",
             new_callable=AsyncMock,
             return_value=_make_mock_log(status="completed"),
         ):
