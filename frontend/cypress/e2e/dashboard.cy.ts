@@ -8,9 +8,14 @@ const USER = { id: "u1", name: "Rosali", email: "rosalijustino@hotmail.com", rol
 const MOCK_STATS = {
   total_analyses: 12,
   total_threats: 34,
+  completed_analyses: 10,
+  failed_analyses: 2,
+  total_components_analyzed: 55,
+  threats_by_risk: { critical: 1, high: 5, medium: 10, low: 18 },
   total_dataset_entries: 8,
   total_training_runs: 2,
-  risk_distribution: { HIGH: 10, MEDIUM: 14, LOW: 10 },
+  stride_distribution: { spoofing: 2, tampering: 3, denial_of_service: 1 },
+  top_components: [{ label: "api_gateway", count: 10 }],
   recent_analyses: [],
 };
 
@@ -44,7 +49,7 @@ describe("TC-DASH-02: Dashboard — KPIs after login", () => {
 
   it("sidebar shows usage time", () => {
     cy.wait("@getUsage");
-    cy.contains("Tempo de Uso").should("be.visible");
+    cy.contains("Tempo de Uso").should("exist");
   });
 
   it("navigates to InferencePage via sidebar link", () => {

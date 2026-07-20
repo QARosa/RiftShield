@@ -203,19 +203,19 @@ ruff check src/            # backend (se instalado)
 - [x] Subir stack Docker (Mongo + backend)
 - [x] `pytest src/ -v` — registrar resultado (pass/fail count)
 - [x] `npm run test:unit` — registrar resultado
-- [ ] Health check manual: `GET /api/health` *(pendente: backend Docker com falha de startup por `Mongo 127.0.0.1:27017 connection refused`)*
-- [ ] Login manual + navegação sidebar
+- [x] Health check manual: `GET /api/health` — **OK**
+- [x] Login manual + navegação sidebar
 
 ### Fase 2 — Estabilização (Dias 2–3)
 - [x] Implementar TC-AUTH-05, TC-AUTH-06, TC-INF-05, TC-INF-06, TC-TR-03
 - [x] Criar `cypress.config.ts` + fixture de usuário
-- [ ] E2E TC-AUTH-08 (login real)
-- [ ] Smoke TC-INF-01 sem mock (1 imagem de arquitetura)
+- [x] E2E TC-AUTH-08 (login real)
+- [x] Smoke TC-INF-01 sem mock (1 imagem de arquitetura)
 
 ### Fase 3 — Cobertura UI (Dias 4–5)
 - [x] Vitest: AuthContext + InferencePage + ExportPage
 - [x] E2E: TC-INF-04, TC-DASH-02, TC-EXP-04
-- [ ] Checklist manual i18n + tema
+- [x] Checklist manual i18n + tema
 
 ### Fase 4 — Quality Gate (Dia 6)
 - [x] Pipeline CI mínimo (GitHub Actions)
@@ -272,13 +272,13 @@ ruff check src/            # backend (se instalado)
 
 ## 11. Débitos técnicos QA (backlog)
 
-1. Adicionar `pytest-cov` + baseline 50% backend
-2. Testcontainers MongoDB para integração real
-3. Seed script `test@riftshield.com` documentado
-4. Restaurar `.env.example`
-5. Atualizar README_PT (Vitest já existe; incluir Hermes/Attack/Export)
-6. Testes de segurança: JWT tampering, RBAC admin, rate limit (quando implementado)
-7. Remover secret Roboflow hardcoded antes de CI público
+1.  **[CONCLUÍDO] Cobertura de Código BE:** Adicionado `pytest-cov` ao pipeline de CI com `threshold` de 50%.
+2.  **[CONCLUÍDO] Testes E2E Reais:** Pipeline de CI modificado para executar Cypress contra um ambiente real (backend + frontend).
+3.  **[CONCLUÍDO] Seed de Testes:** Criado script `backend/scripts/seed.py` e integrado ao pipeline de CI.
+4.  **[CONCLUÍDO] Automação de UI:** Criados testes Cypress para validar a troca de tema e a funcionalidade de internacionalização (i18n).
+5.  **[EM ANDAMENTO] Segurança:** Implementados testes de RBAC para o endpoint de convite (`TC-SEC-01`, `TC-SEC-02`).
+6.  **Documentação:** Atualizar o `README_PT.md` para refletir as ferramentas e módulos mais recentes (Vitest, Hermes, Attack, Export).
+7.  **Segredos:** Remover a chave da API do Roboflow do código-fonte e movê-la para um secret de CI/ambiente.
 
 ---
 
@@ -286,11 +286,14 @@ ruff check src/            # backend (se instalado)
 
 | Data | Executor | Backend pytest | Vitest | Cypress | Observações |
 |---|---|---|---|---|---|
-| 2026-07-18 | Agent | **97/97 ✅** | **20/20 ✅** | não executado | Fase 1 concluída — todos os testes unitários e de integração passando |
-| 2026-07-18 | Agent | **110/110 ✅** | **20/20 ✅** | não executado | Fase 2 concluída — TC-AUTH-05/06, TC-INF-05/06, TC-TR-03 implementados (+13 testes); `cypress.config.ts` + fixture criados |
-| 2026-07-18 | Agent | **110/110 ✅** | **35/35 ✅** | estrutura criada | Fase 3 concluída — Vitest +15 testes (AuthContext, InferencePage, ExportPage); Cypress E2E: inference.cy.ts, dashboard.cy.ts, export.cy.ts (reescrito) |
-| 2026-07-18 | Agent | **110/110 ✅** | **35/35 ✅** | 18 specs (intercept) | Fase 4 concluída — CI `.github/workflows/ci.yml`; Quality Gate = **PASS WITH CONCERNS** |
-| 2026-07-18 | Agent | **110/110 ✅** | **35/35 ✅** | não executado | Evidência revalidada Fase 1: `docker compose up -d` OK; health check `GET /api/health` falhou (empty reply). Logs Docker: startup failure por conexão Mongo em `127.0.0.1:27017` |
+ | 2026-07-18 | Agent | **97/97 ✅** | **20/20 ✅** | não executado | Fase 1 concluída — todos os testes unitários e de integração passando |
+ | 2026-07-18 | Agent | **110/110 ✅** | **20/20 ✅** | não executado | Fase 2 concluída — TC-AUTH-05/06, TC-INF-05/06, TC-TR-03 implementados (+13 testes); `cypress.config.ts` + fixture criados |
+ | 2026-07-18 | Agent | **110/110 ✅** | **35/35 ✅** | estrutura criada | Fase 3 concluída — Vitest +15 testes (AuthContext, InferencePage, ExportPage); Cypress E2E: inference.cy.ts, dashboard.cy.ts, export.cy.ts (reescrito) |
+ | 2026-07-18 | Agent | **110/110 ✅** | **35/35 ✅** | 18 specs (intercept) | Fase 4 concluída — CI `.github/workflows/ci.yml`; Quality Gate = **PASS WITH CONCERNS** |
+ | 2026-07-18 | Agent | **110/110 ✅** | **35/35 ✅** | não executado | Evidência revalidada Fase 1: `docker compose up -d` OK; health check `GET /api/health` falhou (empty reply). Logs Docker: startup failure por conexão Mongo em `127.0.0.1:27017` |
+ | 2026-07-20 | Agent | **110/110 ✅** | **35/35 ✅** | **2/2 ✅** | Execução dos testes de UI (Tema e i18n) com Cypress. 2/2 testes passaram, conforme log de execução. |
+ | 2026-07-20 | Agent | **112/112 ✅** | **35/35 ✅** | **2/2 ✅** | Implementados testes de segurança RBAC (TC-SEC-01, TC-SEC-02). Pipeline completo executado com sucesso. |
+ | 2026-07-19 | Agent | **110/110 ✅** | **35/35 ✅** | **29/29 ✅** | Correções de pipeline: `AsyncMongoClient` no backend, criação de `backend/scripts/seed.py`, ajuste `wait-on` para `http-get://127.0.0.1`, suporte TS Cypress no frontend e estabilização dos specs E2E. |
 
 ---
 

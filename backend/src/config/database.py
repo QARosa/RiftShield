@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from beanie import init_beanie
-from motor.motor_asyncio import AsyncIOMotorClient
+from pymongo import AsyncMongoClient
 
 from modules.auth.models.invite_model import Invite
 from modules.auth.models.user_model import User
@@ -16,8 +16,8 @@ from modules.attack.models.attack_model import AttackSimulation
 
 
 async def init_database(database_url: str) -> None:
-    client = AsyncIOMotorClient(database_url, serverSelectionTimeoutMS=5000)
-    database = client.riftshield
+    client = AsyncMongoClient(database_url, serverSelectionTimeoutMS=5000)
+    database = client.get_database("riftshield")
 
     await init_beanie(database=database, document_models=[
         User, Invite, DatasetEntry, InferenceResult, TrainingLog, ThreatReport,

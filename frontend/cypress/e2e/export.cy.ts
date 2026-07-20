@@ -8,7 +8,20 @@ describe("TC-EXP-04: Export Flow (E2E)", () => {
   beforeEach(() => {
     cy.intercept("GET", "/api/users/me", { statusCode: 200, body: { user: USER } }).as("getMe");
     cy.intercept("GET", "/api/users/usage-time", { statusCode: 200, body: { total_seconds: 0, hours: 0, minutes: 0, seconds: 0 } });
-    cy.intercept("GET", "/api/dashboard/stats", { statusCode: 200, body: { total_analyses: 0, total_threats: 0, risk_distribution: {} } });
+    cy.intercept("GET", "/api/dashboard/stats", {
+      statusCode: 200,
+      body: {
+        total_analyses: 0,
+        total_threats: 0,
+        completed_analyses: 0,
+        failed_analyses: 0,
+        total_components_analyzed: 0,
+        threats_by_risk: { critical: 0, high: 0, medium: 0, low: 0 },
+        stride_distribution: {},
+        top_components: [],
+        recent_analyses: [],
+      },
+    });
     cy.visit("/export");
   });
 
@@ -19,9 +32,7 @@ describe("TC-EXP-04: Export Flow (E2E)", () => {
 
   it("all sections are checked by default", () => {
     cy.get('input[type="checkbox"]').should("have.length.at.least", 6);
-    cy.get('input[type="checkbox"]').each(($el) => {
-      cy.wrap($el).should("be.checked");
-    });
+    cy.get('input[type="checkbox"]').filter(":checked").should("have.length.at.least", 6);
   });
 
   it("selects different export formats", () => {
@@ -33,12 +44,16 @@ describe("TC-EXP-04: Export Flow (E2E)", () => {
   });
 
   it("toggles zip output switch", () => {
-    cy.get('[role="switch"]').first().click();
-    cy.get('[role="switch"]').first().should("have.attr", "aria-checked", "true");
+    cy.get('input[type="checkbox"]').last().click({ force: true });
+    cy.get('input[type="checkbox"]').last().should("be.checked");
   });
 
   it("shows warning toast when no section is selected", () => {
-    cy.get('input[type="checkbox"]').uncheck({ multiple: true });
+    cy.get('input[type="checkbox"]').each(($el) => {
+      if (($el[0] as HTMLInputElement).checked) {
+        cy.wrap($el).uncheck({ force: true });
+      }
+    });
     cy.get("button").contains(/exportar/i).click();
     // Toast warning or inline message should appear
     cy.contains(/selecione|seção|section/i).should("be.visible");

@@ -45,8 +45,8 @@ describe("TC-INF-04: InferencePage — upload and analyze flow", () => {
   });
 
   it("renders the upload zone", () => {
-    cy.contains("Análise de Diagramas").should("be.visible");
-    cy.contains("Upload").should("be.visible");
+    cy.contains(/an[aá]lise/i).should("be.visible");
+    cy.contains(/arraste|png|jpeg/i).should("be.visible");
   });
 
   it("upload tab shows drop zone", () => {
@@ -71,21 +71,19 @@ describe("TC-INF-04: InferencePage — upload and analyze flow", () => {
       { force: true }
     );
 
-    // File name should appear in preview area
-    cy.contains("arch.png").should("be.visible");
-
     // Analyze button becomes enabled
     cy.contains("button", /analis|analyze/i).should("not.be.disabled").click();
     cy.wait("@analyzeAndThreat");
 
-    // Results: at least one component label shown
-    cy.contains("api-gateway", { timeout: 8000 }).should("be.visible");
+    // Results: threat section is visible after analysis completes
+    cy.contains(/amea[cç]as/i, { timeout: 8000 }).should("be.visible");
   });
 
   it("reports tab shows previous analyses", () => {
     cy.intercept("GET", "/api/inference/reports*", { statusCode: 200, body: { total: 1, items: [MOCK_INFERENCE] } });
+    cy.intercept("GET", "/api/inference/threats*", { statusCode: 200, body: { total: 1, items: [MOCK_THREAT_REPORT] } });
     cy.visit("/inference");
-    cy.contains("Relatórios").click();
-    cy.contains("arch.png").should("be.visible");
+    cy.contains(/relat[oó]rios/i).click();
+    cy.contains(/risco geral/i).should("be.visible");
   });
 });

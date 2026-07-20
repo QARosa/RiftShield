@@ -7,10 +7,13 @@ export function LanguageToggle() {
 
   return (
     <Flex
+      as="button"
+      type="button"
       align="center"
       gap={1.5}
       cursor="pointer"
       onClick={() => setLang(lang === "pt-BR" ? "en-US" : "pt-BR")}
+      aria-label={lang === "pt-BR" ? "Switch to English" : "Mudar para Português"}
       title={lang === "pt-BR" ? "Mudar para inglês" : "Switch to Portuguese"}
       _hover={{ opacity: 0.8, transform: "scale(1.05)" }}
       transition="all 0.2s"
