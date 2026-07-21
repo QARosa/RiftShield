@@ -171,6 +171,12 @@ jobs:
         run: npm run dev -- --port 1999 &
 
       # ─── Wait & Run Tests ───────────────────────────────────
+      - name: Start Xvfb (virtual display for Electron/Cypress)
+        run: |
+          Xvfb :99 -screen 0 1280x1024x24 &
+          echo "Xvfb PID: $!"
+          sleep 1
+
       - name: Wait for services to be ready
         run: npx wait-on http-get://127.0.0.1:3000/api/health http-get://127.0.0.1:1999 --timeout 90000
 
@@ -198,9 +204,18 @@ jobs:
 
       - name: Run Cypress E2E
         working-directory: frontend
+        env:
+          DISPLAY: ":99"
         run: |
           set -o pipefail
           npx cypress run --browser electron --reporter spec 2>&1 | tee /tmp/cypress-out.txt
+
+      - name: Annotate with Cypress output (first 80 lines)
+        if: always()
+        run: |
+          head -80 /tmp/cypress-out.txt 2>/dev/null | while IFS= read -r line; do
+            echo "::notice title=cypress-log::$line"
+          done || echo "::notice title=cypress-log::(no output)"
 
       - name: Publish Cypress summary
         if: always()
