@@ -1,8 +1,6 @@
 import asyncio
-from typing import AsyncGenerator
 
 import pytest
-from httpx import ASGITransport, AsyncClient
 
 from config.settings import get_settings
 

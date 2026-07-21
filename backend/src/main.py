@@ -3,7 +3,7 @@ from __future__ import annotations
 from contextlib import asynccontextmanager
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import ValidationError
 
@@ -11,6 +11,7 @@ from config.database import init_database
 from config.settings import get_settings
 from middleware.error_handler import app_error_handler, validation_error_handler
 from middleware.refresh_middleware import RefreshTokenMiddleware
+from middleware.security_headers import SecurityHeadersMiddleware
 from modules.auth import auth_router
 from modules.hermes import hermes_router
 from modules.attack import attack_router
@@ -51,14 +52,13 @@ async def lifespan(_app: FastAPI):
         import yaml
         try:
             args_yaml = Path(__file__).resolve().parent.parent / "models" / "architecture_yolo" / "args.yaml"
-            epochs_done = 0
             if args_yaml.exists():
                 with open(args_yaml) as f:
                     meta = yaml.safe_load(f)
-                epochs_done = meta.get("epochs", 9)
+                    meta.get("epochs", 9)
             await TrainingLog(
                 model_type="yolov8n",
-                model_name=f"Pré-treinado architecture_merged (9 épocas)",
+                model_name="Pré-treinado architecture_merged (9 épocas)",
                 dataset_version="architecture_merged_roboflow",
                 hyperparameters={"epochs": 9, "imgsz": 640, "batch": 16, "fine_tune": False},
                 metrics={"mAP50": 0.579, "mAP50_95": 0.411, "precision": 0.731, "recall": 0.554},
@@ -88,6 +88,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(RefreshTokenMiddleware)
 app.add_exception_handler(AppError, app_error_handler)
 app.add_exception_handler(ValidationError, validation_error_handler)

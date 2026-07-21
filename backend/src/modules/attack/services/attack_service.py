@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from datetime import datetime
 from typing import List, Tuple
 
 from modules.attack.models.attack_model import AttackSimulation

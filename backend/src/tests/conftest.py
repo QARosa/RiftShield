@@ -1,8 +1,7 @@
 import asyncio
 import pytest
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import MagicMock
 
-from config.settings import get_settings
 from middleware.dependencies import get_current_user
 
 

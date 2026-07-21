@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-from fastapi import Depends, UploadFile
+from fastapi import UploadFile
 
 from modules.inference.dataset.dataset_schema import (
-    ComponentLabelInput,
     ComponentLabelResponse,
     DatasetEntryResponse,
     DatasetListResponse,

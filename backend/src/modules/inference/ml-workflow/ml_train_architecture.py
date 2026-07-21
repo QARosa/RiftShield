@@ -40,7 +40,7 @@ def train():
     )
 
     best = MODELS_DIR / "architecture_yolo" / "weights" / "best.pt"
-    print(f"\nTreinamento concluido!")
+    print("\nTreinamento concluido!")
     print(f"  Dataset: {DATASET_YAML}")
     print(f"  Modelo:  {best}")
     return str(best)
@@ -65,7 +65,7 @@ def train_quick():
     )
 
     best = MODELS_DIR / "architecture_yolo_quick" / "weights" / "best.pt"
-    print(f"\nTreinamento rapido concluido!")
+    print("\nTreinamento rapido concluido!")
     print(f"  Modelo: {best}")
     return str(best)
 

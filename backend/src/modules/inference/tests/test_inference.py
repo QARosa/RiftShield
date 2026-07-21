@@ -7,7 +7,6 @@ from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 
 from middleware.dependencies import get_current_user
-from modules.inference.models.inference_model import InferenceResult
 
 pytestmark = pytest.mark.asyncio
 

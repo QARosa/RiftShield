@@ -1,8 +1,8 @@
-from fastapi import Cookie, Depends, Request, Response
+from fastapi import Cookie, Depends, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from typing import Optional
 
-from shared.utils.errors import UnauthorizedError
+from shared.utils.errors import ForbiddenError, UnauthorizedError
 from shared.utils.token import verify_access_token, verify_refresh_token, generate_access_token
 
 
@@ -44,3 +44,9 @@ async def get_current_user(
             pass
 
     raise UnauthorizedError("Token inválido ou expirado")
+
+
+async def require_admin(user=Depends(get_current_user)):
+    if getattr(user, "role", "").upper() != "ADMIN":
+        raise ForbiddenError()
+    return user

@@ -13,3 +13,9 @@ datasets/
 models/
 /models
 *.venv
+
+# Test artifacts
+.pytest_cache/
+.coverage
+htmlcov/
+pytest-results.xml

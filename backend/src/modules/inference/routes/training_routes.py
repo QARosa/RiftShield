@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 
-from middleware.dependencies import get_current_user
+from middleware.dependencies import get_current_user, require_admin
 from modules.inference.controllers import training_controller
 from modules.inference.schemas.training_schema import (
     ActivateModelRequest,
@@ -16,7 +16,7 @@ router = APIRouter()
 @router.post("/train", response_model=TrainingLogResponse)
 async def start_training(
     req: StartTrainingRequest,
-    user=Depends(get_current_user),
+    user=Depends(require_admin),
 ) -> TrainingLogResponse:
     return await training_controller.start_training(req, str(user.id))
 
@@ -24,7 +24,7 @@ async def start_training(
 @router.post("/fine-tune", response_model=TrainingLogResponse)
 async def fine_tune(
     req: FineTuneRequest,
-    user=Depends(get_current_user),
+    user=Depends(require_admin),
 ) -> TrainingLogResponse:
     return await training_controller.fine_tune_upload(req, str(user.id))
 
@@ -49,6 +49,6 @@ async def get_model(
 @router.post("/models/activate")
 async def activate_model(
     req: ActivateModelRequest,
-    user=Depends(get_current_user),
+    user=Depends(require_admin),
 ) -> dict:
     return await training_controller.activate_model(req, str(user.id))

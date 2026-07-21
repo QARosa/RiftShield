@@ -5,7 +5,7 @@ import os
 import uuid
 from typing import Any, cast
 
-from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
+from langchain_core.messages import HumanMessage, AIMessage
 
 from modules.hermes.agents.graph import hermes_graph
 from modules.hermes.models.chat_model import HermesMessage

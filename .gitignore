@@ -8,3 +8,12 @@ __pycache__/
 *.log
 node_modules/
 dist/
+
+# QA evidence (local runs only)
+evidencias/
+
+# Root-level Cypress scaffold (use frontend/cypress instead)
+/cypress/
+/cypress.config.js
+/package.json
+/package-lock.json

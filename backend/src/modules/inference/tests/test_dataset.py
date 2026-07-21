@@ -7,7 +7,7 @@ from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 
 from middleware.dependencies import get_current_user
-from modules.inference.dataset.dataset_model import ComponentLabel, DatasetEntry
+from modules.inference.dataset.dataset_model import DatasetEntry
 
 pytestmark = pytest.mark.asyncio
 

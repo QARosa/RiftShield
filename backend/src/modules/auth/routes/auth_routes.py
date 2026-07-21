@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Cookie, Depends, Response
 
-from middleware.dependencies import get_current_user
+from middleware.dependencies import get_current_user, require_admin
 from modules.auth.controllers import auth_controller
 from modules.auth.schemas.auth_schema import LoginInput, RegisterInput
 
@@ -28,5 +28,5 @@ async def logout(response: Response, user=Depends(get_current_user)) -> dict:
 
 
 @router.post("/invite")
-async def generate_invite(user=Depends(get_current_user)) -> dict:
+async def generate_invite(user=Depends(require_admin)) -> dict:
     return await auth_controller._generate_invite(str(user.id))

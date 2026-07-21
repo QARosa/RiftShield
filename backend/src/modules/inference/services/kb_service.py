@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import re
 from typing import Dict, List, Optional, Tuple
 
 from modules.inference.models.kb_model import KBCountermeasure, KBVulnerability, VulnerabilityFilter
@@ -26,7 +25,7 @@ async def seed_knowledge_base() -> int:
         KBVulnerability(cve_id="CWE-918", title="Server-Side Request Forgery (SSRF)", title_pt="Falsificação de Requisição no Servidor (SSRF)", title_en="Server-Side Request Forgery (SSRF)", description="O servidor pode ser induzido a fazer requisições internas.", description_pt="O servidor pode ser induzido a fazer requisições internas.", description_en="The server can be tricked into making internal requests.", cvss_score=8.8, cwe="CWE-918", affected_components=["server", "api", "microservice"], tags=["ssrf", "server-side"]),
         KBVulnerability(cve_id="CWE-276", title="Incorrect Default Permissions", title_pt="Permissões Padrão Incorretas", title_en="Incorrect Default Permissions", description="Permissões padrão muito permissivas.", description_pt="Permissões padrão muito permissivas.", description_en="Default permissions are too permissive.", cvss_score=6.5, cwe="CWE-276", affected_components=["storage", "container", "database"], tags=["permissions", "misconfiguration"]),
     ]
-    inserted = await KBVulnerability.insert_many(vulns)
+    await KBVulnerability.insert_many(vulns)
 
     countermeasures = [
         KBCountermeasure(title="Implementar Autenticação Multifator (MFA)", title_pt="Implementar Autenticação Multifator (MFA)", title_en="Implement Multi-Factor Authentication (MFA)", description="Adicionar camadas extras de verificação de identidade.", description_pt="Adicionar camadas extras de verificação de identidade.", description_en="Add extra layers of identity verification.", priority="critical", implementation_guide="Integrar provedor OAuth 2.0 / SAML e exigir MFA para acessos administrativos.", implementation_guide_pt="Integrar provedor OAuth 2.0 / SAML e exigir MFA para acessos administrativos.", implementation_guide_en="Integrate OAuth 2.0 / SAML provider and require MFA for admin access.", references=["https://owasp.org/www-community/Authentication_Cheat_Sheet"], vulnerability_cwe_ids=["CWE-287", "CWE-306", "CWE-798"]),

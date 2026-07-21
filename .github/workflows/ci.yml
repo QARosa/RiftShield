@@ -47,7 +47,11 @@ jobs:
         run: |
           pip install --upgrade pip
           pip install -r requirements.txt
-          pip install pytest pytest-asyncio httpx pytest-cov
+          pip install pytest pytest-asyncio httpx pytest-cov ruff
+
+      - name: Lint backend (ruff)
+        working-directory: backend
+        run: ruff check src/
 
       - name: Run pytest
         working-directory: backend
@@ -84,6 +88,11 @@ jobs:
       - name: Lint
         working-directory: frontend
         run: npm run lint
+
+      - name: Security audit (npm)
+        working-directory: frontend
+        run: npm audit --audit-level=critical
+        continue-on-error: true
 
       - name: Run Vitest
         working-directory: frontend

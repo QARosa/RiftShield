@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 
 from modules.inference.models.inference_model import InferenceResult
 from modules.inference.models.threat_model import ThreatReport

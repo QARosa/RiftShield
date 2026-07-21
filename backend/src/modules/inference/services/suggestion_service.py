@@ -2,7 +2,6 @@
 
 import base64
 import json
-from pathlib import Path
 
 from langchain_core.messages import HumanMessage, SystemMessage
 
@@ -89,7 +88,6 @@ async def suggest_architecture(
     provider = config.get("provider", "")
 
     if provider == "deepseek":
-        import tempfile, os
         b64_a = base64.b64encode(image_a_bytes).decode("utf-8")
         b64_b = base64.b64encode(image_b_bytes).decode("utf-8")
         msg = HumanMessage(content=

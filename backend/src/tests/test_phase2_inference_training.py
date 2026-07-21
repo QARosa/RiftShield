@@ -24,6 +24,7 @@ _PNG = b"\x89PNG\r\n\x1a\n" + b"\x00" * 16  # minimal PNG-like header
 def mock_user():
     user = MagicMock()
     user.id = "507f1f77bcf86cd799439011"
+    user.role = "ADMIN"
     user.language = "pt-BR"
     return user
 

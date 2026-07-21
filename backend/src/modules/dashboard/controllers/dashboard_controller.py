@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from fastapi import Depends
 
 from modules.dashboard.schemas.dashboard_schema import (
     DashboardStatsResponse,

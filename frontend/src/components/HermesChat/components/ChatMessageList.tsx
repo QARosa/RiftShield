@@ -2,6 +2,7 @@ import React from "react";
 import { Flex, Box, Text, Menu, MenuButton, MenuList, MenuItem, IconButton, Spinner } from "@chakra-ui/react";
 import { MoreVertical, Trash2 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
+import rehypeSanitize from "rehype-sanitize";
 import { type ChatMessageListProps } from "../types";
 import { useT } from "../../../hooks/useT";
 import { useHermesThemeFx } from "../styles/theme-fx";
@@ -50,7 +51,7 @@ export const ChatMessageList: React.FC<ChatMessageListProps> = ({
                 "pre, code": { bg: "blackAlpha.300", p: 1, borderRadius: "md", fontSize: "xs" },
               }}
             >
-              <ReactMarkdown>{msg.content}</ReactMarkdown>
+              <ReactMarkdown rehypePlugins={[rehypeSanitize]}>{msg.content}</ReactMarkdown>
             </Box>
             {msg.has_attachment && (
               <Text fontSize="xs" mt={2} fontStyle="italic" color={themeFx.mutedText}>

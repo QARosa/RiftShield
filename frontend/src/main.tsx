@@ -7,15 +7,26 @@ import {
 import theme from "./theme";
 import "./styles/scrollbar.css";
 import App from "./components/App";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 import { ToastProvider } from "./components/Toast/components/ToastContext";
+
+window.addEventListener("unhandledrejection", (event) => {
+  console.error("Unhandled promise rejection:", event.reason);
+});
+
+window.addEventListener("error", (event) => {
+  console.error("Uncaught error:", event.error ?? event.message);
+});
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <ColorModeScript initialColorMode={theme.config.initialColorMode} />
     <ChakraProvider theme={theme}>
-      <ToastProvider>
-        <App />
-      </ToastProvider>
+      <ErrorBoundary>
+        <ToastProvider>
+          <App />
+        </ToastProvider>
+      </ErrorBoundary>
     </ChakraProvider>
   </StrictMode>,
 );

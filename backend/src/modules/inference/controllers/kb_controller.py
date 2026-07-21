@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from fastapi import Depends, Query
 
 from modules.inference.models.kb_model import VulnerabilityFilter
 from modules.inference.schemas.kb_schema import (

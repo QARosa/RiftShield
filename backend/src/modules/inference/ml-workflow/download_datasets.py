@@ -17,7 +17,7 @@ from pathlib import Path
 
 import yaml
 
-API_KEY = "t8Ww1jdgyzZycgsBirPR"
+API_KEY = os.environ.get("ROBOFLOW_API_KEY", "")
 
 ROBOFLOW_DATASETS = [
     {"workspace": "project-v2jjh", "project": "network-topology-diagram", "version": 1},
@@ -35,6 +35,9 @@ MERGED_DIR = BASE_DIR / "datasets" / "architecture_merged"
 
 
 def download_all():
+    if not API_KEY:
+        raise ValueError("ROBOFLOW_API_KEY environment variable is required")
+
     from roboflow import Roboflow
 
     rf = Roboflow(api_key=API_KEY)
@@ -147,7 +150,7 @@ def merge_datasets():
     with open(yaml_path, "w") as f:
         yaml.dump(data_yaml, f)
 
-    print(f"\nMerge complete!")
+    print("\nMerge complete!")
     print(f"  Total images: {image_counter}")
     print(f"  Total classes: {len(merged_names)}")
     print(f"  Classes: {merged_names}")

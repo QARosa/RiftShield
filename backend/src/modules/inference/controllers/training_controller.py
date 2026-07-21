@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from datetime import datetime
-from typing import List, Optional
 
 from modules.inference.models.inference_model import TrainingLog
 from modules.inference.schemas.training_schema import (

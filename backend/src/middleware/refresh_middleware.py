@@ -1,6 +1,10 @@
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 
+from config.settings import get_settings
+
+settings = get_settings()
+
 
 class RefreshTokenMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
@@ -12,7 +16,7 @@ class RefreshTokenMiddleware(BaseHTTPMiddleware):
                 value=new_token,
                 httponly=True,
                 samesite="lax",
-                secure=False,
+                secure=settings.is_production,
                 max_age=900,
             )
         return response

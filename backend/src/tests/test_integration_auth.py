@@ -20,7 +20,7 @@ def mock_user():
     user.country = "Brasil"
     user.state = "Bahia"
     user.city = "Salvador"
-    user.role = "user"
+    user.role = "ADMIN"
     user.profession = "Arquiteto"
     user.seniority = "senior"
     user.age = 30
@@ -129,6 +129,14 @@ class TestAuthIntegration:
             assert response.status_code == 200
             data = response.json()
             assert "invite" in data
+        app.dependency_overrides.clear()
+
+    # TC-AUTH-05 (negative): Regular user cannot generate invite → 403
+    async def test_generate_invite_as_user_forbidden(self, app_client, mock_user):
+        mock_user.role = "USER"
+        app.dependency_overrides[get_current_user] = lambda: mock_user
+        response = await app_client.post("/api/auth/invite")
+        assert response.status_code == 403
         app.dependency_overrides.clear()
 
     # TC-AUTH-05 (negative): Unauthenticated request to /invite → 401

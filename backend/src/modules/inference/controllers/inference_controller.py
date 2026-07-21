@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from fastapi import Depends, UploadFile
+from fastapi import UploadFile
 
 from modules.inference.schemas.inference_schema import (
     AnalyzeResponse,

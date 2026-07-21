@@ -2,7 +2,6 @@
 
 import base64
 import json
-import os
 import uuid
 from pathlib import Path
 
@@ -60,7 +59,7 @@ def _build_llm(config: dict):
     provider = config.get("provider", "google")
     key_google = config.get("google_api_key", "")
     key_openai = config.get("openai_api_key", "")
-    key_deepseek = config.get("deepseek_api_key", "")
+    config.get("deepseek_api_key", "")
     model = config.get("google_model", "gemini-2.5-flash-lite")
 
     if provider == "deepseek":
@@ -90,7 +89,6 @@ async def analyze_with_llm(
     if llm is None:
         return None
 
-    from modules.hermes.models.chat_model import HermesMessage
 
     file_id = uuid.uuid4().hex[:12]
     safe_filename = f"{file_id}_{filename}"

@@ -1,4 +1,3 @@
-import pytest
 from shared.utils.errors import AppError, UnauthorizedError, ForbiddenError, NotFoundError
 
 

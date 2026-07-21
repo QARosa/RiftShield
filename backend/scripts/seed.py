@@ -51,7 +51,8 @@ async def main() -> None:
 
     print(f"Connecting to database at {db_url}...")
     client = AsyncMongoClient(db_url)
-    database = client.get_database("riftshield_test")
+    db_name = db_url.rsplit("/", 1)[-1].split("?")[0] or "riftshield"
+    database = client.get_database(db_name)
 
     await init_beanie(
         database=database,

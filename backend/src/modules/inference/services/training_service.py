@@ -18,7 +18,8 @@ async def fine_tune(
     user_id: str,
     epochs: int = 10,
 ) -> TrainingLog:
-    import tempfile, yaml
+    import tempfile
+    import yaml
     from modules.inference.dataset.dataset_model import DatasetEntry
 
     entries = await DatasetEntry.find({"split": "train"}).to_list()
@@ -91,7 +92,7 @@ async def fine_tune(
                     with PILImage.open(src) as img_data:
                         iw, ih = img_data.size
                 except:
-                    iw, ih = 640, 640
+                    _iw, _ih = 640, 640
                 label_lines.append(f"0 {0.5:.6f} {0.5:.6f} {1.0:.6f} {1.0:.6f}")
             with open(dst_lbl, "w") as f:
                 f.write("\n".join(label_lines) + "\n")

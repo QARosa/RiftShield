@@ -15,6 +15,7 @@ pytestmark = pytest.mark.asyncio
 def mock_user():
     user = MagicMock()
     user.id = "507f1f77bcf86cd799439011"
+    user.role = "ADMIN"
     return user
 
 

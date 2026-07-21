@@ -1,6 +1,5 @@
 ﻿# -\*- coding: utf-8 -\*-\nfrom __future__ import annotations
 
-from typing import Dict, List, Tuple
 
 from modules.inference.models.inference_model import InferenceResult
 from modules.inference.models.threat_model import ThreatReport

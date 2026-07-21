@@ -3,7 +3,6 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, File, Form, UploadFile
 
 from middleware.dependencies import get_current_user
-from modules.inference.dataset import dataset_service
 from modules.inference.dataset.dataset_controller import (
     augment_entry,
     delete_entry,

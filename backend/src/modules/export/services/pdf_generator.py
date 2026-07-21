@@ -3,7 +3,7 @@ from __future__ import annotations
 import base64
 import io
 from datetime import datetime, timezone, timedelta
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional
 
 BR_TIMEZONE = timezone(timedelta(hours=-3))
 
