@@ -200,7 +200,7 @@ jobs:
         working-directory: frontend
         run: |
           set -o pipefail
-          npx cypress run --browser chrome --headless --reporter spec 2>&1 | tee /tmp/cypress-out.txt
+          npx cypress run --browser electron --reporter spec 2>&1 | tee /tmp/cypress-out.txt
 
       - name: Publish Cypress summary
         if: always()
