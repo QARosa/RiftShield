@@ -55,7 +55,9 @@ jobs:
 
       - name: Run pytest
         working-directory: backend
-        run: python -m pytest src/ -v --tb=short --junitxml=pytest-results.xml --cov=src --cov-report=term-missing --cov-fail-under=50
+        env:
+          PYTHONPATH: src
+        run: python -m pytest src/ -v -p no:flask --tb=short --junitxml=pytest-results.xml --cov=src --cov-report=term-missing --cov-fail-under=50
 
       - name: Upload pytest results
         if: always()

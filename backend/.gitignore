@@ -10,8 +10,9 @@ __pycache__
 *.log
 datasets/
 *.datasets
-models/
-/models
+# YOLO / ML weight dirs only (do NOT ignore Python packages like hermes/models)
+/models/
+*.pt
 *.venv
 
 # Test artifacts
