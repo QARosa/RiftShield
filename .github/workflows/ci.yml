@@ -169,22 +169,29 @@ jobs:
       - name: Patch Cypress spawn to add --disable-gpu for CI Electron
         working-directory: frontend
         run: |
-          python3 - <<'PYEOF'
+          python3 <<'PYEOF'
           import sys
           f = 'node_modules/cypress/lib/exec/spawn.js'
           s = open(f, encoding='utf-8').read()
           PAT = "electronArgs.push('--no-sandbox');"
           REP = "electronArgs.push('--no-sandbox'); electronArgs.push('--disable-gpu'); electronArgs.push('--disable-dev-shm-usage');"
+          print(f'File length: {len(s)} chars')
+          print(f'PAT found: {PAT in s}')
+          print(f'Already has dev-shm: {"--disable-dev-shm-usage" in s}')
           if '--disable-dev-shm-usage' in s:
               print('already patched'); sys.exit(0)
           if PAT not in s:
-              # show surrounding context for diagnosis
               idx = s.find('electronArgs')
-              print('WARN: pattern not found. Sample:', repr(s[idx:idx+120]) if idx>=0 else 'electronArgs not found!')
+              print('PATTERN NOT FOUND. Sample:', repr(s[max(0,idx-10):idx+150]) if idx>=0 else 'electronArgs not found!')
               sys.exit(1)
           s = s.replace(PAT, REP, 1)
           open(f, 'w', encoding='utf-8').write(s)
-          print('Patched OK:', REP[:80])
+          # verify
+          s2 = open(f, encoding='utf-8').read()
+          ok = '--disable-dev-shm-usage' in s2
+          print('Patch verified OK:', ok)
+          if not ok:
+              sys.exit(1)
           PYEOF
 
       - name: Run frontend server in background
@@ -192,6 +199,11 @@ jobs:
         run: npm run dev -- --port 1999 &
 
       # ─── Wait & Run Tests ───────────────────────────────────
+      - name: Install Cypress Linux dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq libgtk-3-0 libnss3 libxss1 libgbm1 libxtst6 libnotify4 xauth
+
       - name: Wait for services to be ready
         run: npx wait-on http-get://127.0.0.1:3000/api/health http-get://127.0.0.1:1999 --timeout 90000
 
@@ -220,14 +232,13 @@ jobs:
       - name: Run Cypress E2E
         working-directory: frontend
         env:
-          # Force Mesa software rendering — prevents Electron renderer crash (exit 27)
-          # on GitHub Actions ubuntu-latest which has no physical GPU.
           LIBGL_ALWAYS_SOFTWARE: "1"
           GALLIUM_DRIVER: "softpipe"
-          ELECTRON_ENABLE_LOGGING: "1"
+          # Pass extra flags directly to the Cypress Electron binary
+          ELECTRON_EXTRA_LAUNCH_ARGS: "--disable-gpu --disable-dev-shm-usage"
         run: |
           set -o pipefail
-          xvfb-run --auto-servernum --server-args="-screen 0 1280x1024x24" \
+          xvfb-run --auto-servernum --server-args="-screen 0 1280x1024x24 +extension GLX +extension RENDER" \
             npx cypress run --browser electron --reporter spec 2>&1 | tee /tmp/cypress-out.txt
 
       - name: Annotate with Cypress output (first 200 lines)
