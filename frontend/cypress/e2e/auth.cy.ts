@@ -1,6 +1,15 @@
 describe("Auth Flow (E2E)", () => {
   beforeEach(() => {
-    // No auth needed — these tests exercise the login page directly
+    // Stub auth-check endpoints so the spinner clears instantly
+    // and LoginForm renders without real network calls
+    cy.intercept("GET", "/api/users/me", {
+      statusCode: 401,
+      body: { detail: "Not authenticated" },
+    }).as("authCheck");
+    cy.intercept("POST", "/api/auth/refresh", {
+      statusCode: 401,
+      body: { detail: "Token expired" },
+    }).as("refresh");
     cy.visit("/");
   });
 

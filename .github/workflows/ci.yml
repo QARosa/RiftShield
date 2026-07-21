@@ -196,10 +196,6 @@ jobs:
           test "$code" = "200"
           python -c "import json; d=json.load(open('/tmp/proxy-login.json')); assert 'accessToken' in d, d"
 
-      - name: Cypress auth smoke spec
-        working-directory: frontend
-        run: npx cypress run --browser chrome --headless --spec cypress/e2e/auth.cy.ts
-
       - name: Run Cypress E2E
         working-directory: frontend
         run: |
