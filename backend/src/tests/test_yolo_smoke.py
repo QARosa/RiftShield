@@ -1,18 +1,11 @@
 """REQ-04: Smoke test — real YOLO inference on a sample image (no service mock)."""
 
-import os
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-pytestmark = [
-    pytest.mark.asyncio,
-    pytest.mark.skipif(
-        os.getenv("GITHUB_ACTIONS") == "true",
-        reason="YOLO smoke runs locally; CI validates inference via Cypress E2E",
-    ),
-]
+pytestmark = pytest.mark.asyncio
 
 FIXTURES_DIR = Path(__file__).resolve().parent / "fixtures"
 SAMPLE_IMAGE = FIXTURES_DIR / "diagram.png"
