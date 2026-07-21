@@ -17,5 +17,17 @@ export default defineConfig({
       // Defina HERMES_API_KEY para validar resposta real do chat no §10-07
       HERMES_API_KEY: "",
     },
+    setupNodeEvents(on) {
+      // Prevent Chrome renderer crash (exit 27) in CI environments where
+      // /dev/shm is limited (64 MB). These flags are safe locally too.
+      on("before:browser:launch", (browser, launchOptions) => {
+        if (browser.family === "chromium" && browser.name !== "electron") {
+          launchOptions.args.push("--disable-dev-shm-usage");
+          launchOptions.args.push("--no-sandbox");
+          launchOptions.args.push("--disable-gpu");
+        }
+        return launchOptions;
+      });
+    },
   },
 });
