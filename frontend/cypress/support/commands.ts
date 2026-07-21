@@ -10,17 +10,25 @@ declare global {
       createAdminInvite(): Chainable<string>;
       toggleLanguage(to: "en" | "pt"): Chainable<void>;
       toggleTheme(to: "light" | "dark"): Chainable<void>;
+      stubAuthenticatedSession(user?: {
+        id: string;
+        name: string;
+        email: string;
+        role?: string;
+      }): Chainable<void>;
     }
   }
 }
 
+/**
+ * Login via same origin as baseUrl (/api → Vite proxy → backend).
+ * Cypress cookie jar is origin-scoped (includes port), so logging in on :3000
+ * does NOT apply cookies to visits on :1999 — that caused CI E2E failures.
+ */
 Cypress.Commands.add("loginAsTestAdmin", () => {
-  const apiUrl = (Cypress.env("API_URL") as string) || "http://127.0.0.1:3000";
-
-  // API login is more reliable in CI than UI form (cookies shared across localhost ports)
   cy.request({
     method: "POST",
-    url: `${apiUrl}/api/auth/login`,
+    url: "/api/auth/login",
     body: { email: ADMIN_EMAIL, password: ADMIN_PASSWORD },
     failOnStatusCode: true,
   }).then((res) => {
@@ -30,23 +38,23 @@ Cypress.Commands.add("loginAsTestAdmin", () => {
 
   cy.visit("/dashboard");
   cy.url({ timeout: 15000 }).should("include", "/dashboard");
-  cy.contains(/dashboard|painel|an[aá]lise/i, { timeout: 15000 }).should("be.visible");
+  cy.contains(/dashboard|painel|an[aá]lise/i, { timeout: 15000 }).should(
+    "be.visible",
+  );
 });
 
 Cypress.Commands.add("createAdminInvite", () => {
-  const apiUrl = (Cypress.env("API_URL") as string) || "http://127.0.0.1:3000";
-
   return cy
     .request({
       method: "POST",
-      url: `${apiUrl}/api/auth/login`,
+      url: "/api/auth/login",
       body: { email: ADMIN_EMAIL, password: ADMIN_PASSWORD },
       failOnStatusCode: true,
     })
     .then(() =>
       cy.request({
         method: "POST",
-        url: `${apiUrl}/api/auth/invite`,
+        url: "/api/auth/invite",
         failOnStatusCode: true,
       }),
     )
@@ -56,6 +64,28 @@ Cypress.Commands.add("createAdminInvite", () => {
       cy.clearAllCookies();
       return cy.wrap(code);
     });
+});
+
+/** Stub /users/me (+ refresh) so mocked specs authenticate without real cookies. */
+Cypress.Commands.add("stubAuthenticatedSession", (user) => {
+  const sessionUser = user ?? {
+    id: "u1",
+    name: "Rosali",
+    email: "rosalijustino@hotmail.com",
+    role: "ADMIN",
+  };
+  cy.intercept("GET", "**/api/users/me*", {
+    statusCode: 200,
+    body: { user: sessionUser },
+  }).as("getMe");
+  cy.intercept("POST", "**/api/auth/refresh*", {
+    statusCode: 200,
+    body: { message: "ok" },
+  }).as("refresh");
+  cy.intercept("GET", "**/api/users/usage-time*", {
+    statusCode: 200,
+    body: { total_seconds: 3661, hours: 1, minutes: 1, seconds: 1 },
+  }).as("getUsage");
 });
 
 Cypress.Commands.add("toggleLanguage", (to: "en" | "pt") => {

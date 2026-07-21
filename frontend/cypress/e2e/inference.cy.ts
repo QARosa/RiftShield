@@ -35,12 +35,13 @@ const MOCK_THREAT_REPORT = {
 
 describe("TC-INF-04: InferencePage — upload and analyze flow", () => {
   beforeEach(() => {
-    // Stub auth so the app loads as authenticated
-    cy.intercept("GET", "/api/users/me", { statusCode: 200, body: { user: USER } }).as("getMe");
-    cy.intercept("GET", "/api/inference/reports*", { statusCode: 200, body: { total: 0, items: [] } }).as("getReports");
-    cy.intercept("GET", "/api/inference/threats*", { statusCode: 200, body: { total: 0, items: [] } }).as("getThreats");
-    cy.intercept("GET", "/api/dashboard/stats", { statusCode: 200, body: { total_analyses: 1, total_threats: 1, risk_distribution: {} } }).as("getDash");
-    cy.intercept("GET", "/api/users/usage-time", { statusCode: 200, body: { total_seconds: 0, hours: 0, minutes: 0, seconds: 0 } }).as("getUsage");
+    cy.stubAuthenticatedSession(USER);
+    cy.intercept("GET", "**/api/inference/reports*", { statusCode: 200, body: { total: 0, items: [] } }).as("getReports");
+    cy.intercept("GET", "**/api/inference/threats*", { statusCode: 200, body: { total: 0, items: [] } }).as("getThreats");
+    cy.intercept("GET", "**/api/dashboard/stats*", {
+      statusCode: 200,
+      body: { total_analyses: 1, total_threats: 1, risk_distribution: {} },
+    }).as("getDash");
     cy.visit("/inference");
   });
 

@@ -14,9 +14,12 @@ const MOCK_STATS = {
 
 describe("Main Application Flow (E2E)", () => {
   beforeEach(() => {
-    cy.intercept("GET", "/api/users/me", { statusCode: 200, body: { user: USER } }).as("getMe");
-    cy.intercept("GET", "/api/dashboard/stats", { statusCode: 200, body: MOCK_STATS });
-    cy.intercept("GET", "/api/users/usage-time", { statusCode: 200, body: { total_seconds: 7200, hours: 2, minutes: 0, seconds: 0 } });
+    cy.stubAuthenticatedSession(USER);
+    cy.intercept("GET", "**/api/dashboard/stats*", { statusCode: 200, body: MOCK_STATS });
+    cy.intercept("GET", "**/api/users/usage-time*", {
+      statusCode: 200,
+      body: { total_seconds: 7200, hours: 2, minutes: 0, seconds: 0 },
+    });
     cy.visit("/dashboard");
   });
 

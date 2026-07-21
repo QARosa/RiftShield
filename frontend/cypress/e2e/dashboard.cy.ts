@@ -21,9 +21,8 @@ const MOCK_STATS = {
 
 describe("TC-DASH-02: Dashboard — KPIs after login", () => {
   beforeEach(() => {
-    cy.intercept("GET", "/api/users/me", { statusCode: 200, body: { user: USER } }).as("getMe");
-    cy.intercept("GET", "/api/dashboard/stats", { statusCode: 200, body: MOCK_STATS }).as("getStats");
-    cy.intercept("GET", "/api/users/usage-time", { statusCode: 200, body: { total_seconds: 3661, hours: 1, minutes: 1, seconds: 1 } }).as("getUsage");
+    cy.stubAuthenticatedSession(USER);
+    cy.intercept("GET", "**/api/dashboard/stats*", { statusCode: 200, body: MOCK_STATS }).as("getStats");
     cy.visit("/dashboard");
   });
 

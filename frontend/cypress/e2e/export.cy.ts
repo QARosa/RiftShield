@@ -6,9 +6,8 @@ const USER = { id: "u1", name: "Rosali", email: "rosalijustino@hotmail.com", rol
 
 describe("TC-EXP-04: Export Flow (E2E)", () => {
   beforeEach(() => {
-    cy.intercept("GET", "/api/users/me", { statusCode: 200, body: { user: USER } }).as("getMe");
-    cy.intercept("GET", "/api/users/usage-time", { statusCode: 200, body: { total_seconds: 0, hours: 0, minutes: 0, seconds: 0 } });
-    cy.intercept("GET", "/api/dashboard/stats", {
+    cy.stubAuthenticatedSession(USER);
+    cy.intercept("GET", "**/api/dashboard/stats*", {
       statusCode: 200,
       body: {
         total_analyses: 0,

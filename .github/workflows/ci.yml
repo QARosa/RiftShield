@@ -192,8 +192,13 @@ jobs:
       - name: List failed Cypress screenshots
         if: failure()
         run: |
-          echo "=== Screenshots ==="
-          find frontend/cypress/screenshots -type f 2>/dev/null | sort || true
+          {
+            echo "## Cypress failure screenshots"
+            echo ""
+            echo '```'
+            find frontend/cypress/screenshots -type f 2>/dev/null | sort || echo "(none)"
+            echo '```'
+          } | tee -a "$GITHUB_STEP_SUMMARY"
 
       - name: Upload Cypress screenshots on failure
         if: failure()
