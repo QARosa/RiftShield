@@ -166,6 +166,25 @@ jobs:
         working-directory: frontend
         run: npm ci --legacy-peer-deps
 
+      - name: Patch Cypress spawn to add --disable-gpu for CI Electron
+        working-directory: frontend
+        run: |
+          node -e "
+            const fs = require('fs');
+            const f = 'node_modules/cypress/lib/exec/spawn.js';
+            let s = fs.readFileSync(f, 'utf8');
+            if (!s.includes('--disable-gpu')) {
+              s = s.replace(
+                \"electronArgs.push('--no-sandbox');\",
+                \"electronArgs.push('--no-sandbox'); electronArgs.push('--disable-gpu'); electronArgs.push('--disable-software-rasterizer');\"
+              );
+              fs.writeFileSync(f, s);
+              console.log('spawn.js patched: added --disable-gpu');
+            } else {
+              console.log('spawn.js already patched');
+            }
+          "
+
       - name: Run frontend server in background
         working-directory: frontend
         run: npm run dev -- --port 1999 &
