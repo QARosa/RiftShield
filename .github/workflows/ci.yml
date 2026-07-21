@@ -269,15 +269,17 @@ jobs:
           echo "Running Cypress on Chrome (attempt 1)..."
           if run_chrome "overwrite"; then
             exit 0
+          else
+            STATUS=$?
           fi
-          STATUS=$?
           echo "::warning title=cypress-chrome::Chrome attempt 1 failed with exit code $STATUS"
 
           echo "::warning title=cypress-retry::Retrying Chrome once"
           if run_chrome "append"; then
             exit 0
+          else
+            STATUS=$?
           fi
-          STATUS=$?
           echo "::error title=cypress-failed::Chrome retry failed with exit code $STATUS"
           exit "$STATUS"
 
