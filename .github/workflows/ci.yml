@@ -140,11 +140,18 @@ jobs:
 
       - name: Seed the database for E2E tests
         working-directory: backend
+        env:
+          PYTHONPATH: src
         run: python scripts/seed.py
 
       - name: Run backend server in background
-        working-directory: backend/src
-        run: uvicorn main:app --host 0.0.0.0 --port 3000 &
+        working-directory: backend
+        env:
+          PYTHONPATH: src
+        run: |
+          uvicorn main:app --host 0.0.0.0 --port 3000 &
+          # Give lifespan (DB init) a moment before wait-on
+          sleep 3
 
       # ─── Setup Frontend ─────────────────────────────────────
       - name: Set up Node 20
