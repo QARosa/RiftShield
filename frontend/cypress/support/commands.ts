@@ -21,43 +21,35 @@ declare global {
 }
 
 /**
- * Login via same origin as baseUrl (/api → Vite proxy → backend).
- * Cypress cookie jar is origin-scoped (includes port), so logging in on :3000
- * does NOT apply cookies to visits on :1999 — that caused CI E2E failures.
+ * UI login through Vite (/api proxy) so the browser cookie jar gets HttpOnly
+ * cookies on the same origin as cy.visit (baseUrl :1999).
+ * cy.request to :3000 stores cookies under a different origin and breaks CI.
  */
 Cypress.Commands.add("loginAsTestAdmin", () => {
-  cy.request({
-    method: "POST",
-    url: "/api/auth/login",
-    body: { email: ADMIN_EMAIL, password: ADMIN_PASSWORD },
-    failOnStatusCode: true,
-  }).then((res) => {
-    expect(res.status).to.eq(200);
-    expect(res.body).to.have.property("user");
-  });
-
-  cy.visit("/dashboard");
-  cy.url({ timeout: 15000 }).should("include", "/dashboard");
+  cy.visit("/");
+  cy.get("#email", { timeout: 15000 }).should("be.visible").clear().type(ADMIN_EMAIL);
+  cy.get("#password").clear().type(ADMIN_PASSWORD);
+  cy.get('button[type="submit"]').click();
+  cy.url({ timeout: 20000 }).should("include", "/dashboard");
   cy.contains(/dashboard|painel|an[aá]lise/i, { timeout: 15000 }).should(
     "be.visible",
   );
 });
 
 Cypress.Commands.add("createAdminInvite", () => {
+  // Authenticate in the browser first (cookies on :1999), then call invite via proxy
+  cy.visit("/");
+  cy.get("#email", { timeout: 15000 }).should("be.visible").clear().type(ADMIN_EMAIL);
+  cy.get("#password").clear().type(ADMIN_PASSWORD);
+  cy.get('button[type="submit"]').click();
+  cy.url({ timeout: 20000 }).should("include", "/dashboard");
+
   return cy
     .request({
       method: "POST",
-      url: "/api/auth/login",
-      body: { email: ADMIN_EMAIL, password: ADMIN_PASSWORD },
+      url: "/api/auth/invite",
       failOnStatusCode: true,
     })
-    .then(() =>
-      cy.request({
-        method: "POST",
-        url: "/api/auth/invite",
-        failOnStatusCode: true,
-      }),
-    )
     .then((response) => {
       expect(response.body.invite.code).to.be.a("string").and.not.be.empty;
       const code = response.body.invite.code as string;

@@ -187,18 +187,29 @@ jobs:
 
       - name: Run Cypress E2E
         working-directory: frontend
-        run: npx cypress run --browser chrome --headless --reporter spec
+        run: |
+          set -o pipefail
+          npx cypress run --browser chrome --headless --reporter spec 2>&1 | tee /tmp/cypress-out.txt
 
-      - name: List failed Cypress screenshots
-        if: failure()
+      - name: Publish Cypress summary
+        if: always()
         run: |
           {
-            echo "## Cypress failure screenshots"
+            echo "## Cypress output (tail)"
             echo ""
+            echo '```'
+            tail -n 100 /tmp/cypress-out.txt 2>/dev/null || echo "(no cypress output)"
+            echo '```'
+            echo ""
+            echo "## Screenshots"
             echo '```'
             find frontend/cypress/screenshots -type f 2>/dev/null | sort || echo "(none)"
             echo '```'
-          } | tee -a "$GITHUB_STEP_SUMMARY"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: List failed Cypress screenshots
+        if: failure()
+        run: find frontend/cypress/screenshots -type f 2>/dev/null | sort || true
 
       - name: Upload Cypress screenshots on failure
         if: failure()
