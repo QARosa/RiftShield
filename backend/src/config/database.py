@@ -17,7 +17,8 @@ from modules.attack.models.attack_model import AttackSimulation
 
 async def init_database(database_url: str) -> None:
     client = AsyncMongoClient(database_url, serverSelectionTimeoutMS=5000)
-    database = client.get_database("riftshield")
+    db_name = database_url.rsplit("/", 1)[-1].split("?")[0] or "riftshield"
+    database = client.get_database(db_name)
 
     await init_beanie(database=database, document_models=[
         User, Invite, DatasetEntry, InferenceResult, TrainingLog, ThreatReport,
