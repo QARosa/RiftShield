@@ -173,15 +173,18 @@ jobs:
             const fs = require('fs');
             const f = 'node_modules/cypress/lib/exec/spawn.js';
             let s = fs.readFileSync(f, 'utf8');
-            if (!s.includes('--disable-dev-shm-usage')) {
-              s = s.replace(
-                \"electronArgs.push('--no-sandbox');\",
+            const re = /electronArgs\\.push\\('--no-sandbox'\\);/;
+            if (s.includes('--disable-dev-shm-usage')) {
+              console.log('spawn.js already patched');
+            } else if (re.test(s)) {
+              s = s.replace(re,
                 \"electronArgs.push('--no-sandbox'); electronArgs.push('--disable-gpu'); electronArgs.push('--disable-dev-shm-usage');\"
               );
               fs.writeFileSync(f, s);
-              console.log('spawn.js patched: added --disable-gpu --disable-dev-shm-usage');
+              console.log('spawn.js patched OK');
             } else {
-              console.log('spawn.js already patched');
+              console.error('Pattern not found in spawn.js!');
+              process.exit(1);
             }
           "
 
