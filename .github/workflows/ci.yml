@@ -240,7 +240,7 @@ jobs:
           test "$code" = "200"
           python -c "import json; d=json.load(open('/tmp/proxy-login.json')); assert 'accessToken' in d, d"
 
-      - name: Run Cypress E2E (retry + browser fallback)
+      - name: Run Cypress E2E (Chrome with retry)
         working-directory: frontend
         shell: bash
         env:
@@ -250,22 +250,16 @@ jobs:
           ELECTRON_EXTRA_LAUNCH_ARGS: "--disable-gpu --disable-dev-shm-usage"
         run: |
           set -uo pipefail
-          STATUS=1
 
-          run_cypress() {
-            local browser="$1"
-            local append_mode="$2"
-            local report_arg=""
-            if [[ "$browser" == "chrome" ]]; then
-              report_arg="--headless"
-            fi
+          run_chrome() {
+            local append_mode="$1"
             set +e
             if [[ "$append_mode" == "append" ]]; then
               xvfb-run --auto-servernum --server-args="-screen 0 1280x1024x24 +extension GLX +extension RENDER" \
-                npx cypress run --browser "$browser" $report_arg --reporter spec 2>&1 | tee -a /tmp/cypress-out.txt
+                npx cypress run --browser chrome --headless --config retries=2 --reporter spec 2>&1 | tee -a /tmp/cypress-out.txt
             else
               xvfb-run --auto-servernum --server-args="-screen 0 1280x1024x24 +extension GLX +extension RENDER" \
-                npx cypress run --browser "$browser" $report_arg --reporter spec 2>&1 | tee /tmp/cypress-out.txt
+                npx cypress run --browser chrome --headless --config retries=2 --reporter spec 2>&1 | tee /tmp/cypress-out.txt
             fi
             local rc=${PIPESTATUS[0]}
             set -e
@@ -273,31 +267,18 @@ jobs:
           }
 
           echo "Running Cypress on Chrome (attempt 1)..."
-          if run_cypress chrome "overwrite"; then
-            STATUS=0
-          else
-            STATUS=$?
-            echo "::warning title=cypress-chrome::Chrome attempt 1 failed with exit code $STATUS"
+          if run_chrome "overwrite"; then
+            exit 0
           fi
+          STATUS=$?
+          echo "::warning title=cypress-chrome::Chrome attempt 1 failed with exit code $STATUS"
 
-          if [[ "$STATUS" -eq 27 ]]; then
-            echo "::warning title=cypress-retry::Retrying Chrome after exit code 27"
-            if run_cypress chrome "append"; then
-              STATUS=0
-            else
-              STATUS=$?
-            fi
+          echo "::warning title=cypress-retry::Retrying Chrome once"
+          if run_chrome "append"; then
+            exit 0
           fi
-
-          if [[ "$STATUS" -ne 0 ]]; then
-            echo "::warning title=cypress-fallback::Falling back to Electron after Chrome failure ($STATUS)"
-            if run_cypress electron "append"; then
-              STATUS=0
-            else
-              STATUS=$?
-            fi
-          fi
-
+          STATUS=$?
+          echo "::error title=cypress-failed::Chrome retry failed with exit code $STATUS"
           exit "$STATUS"
 
       - name: Annotate with Cypress output (first 200 lines)
