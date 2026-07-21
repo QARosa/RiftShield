@@ -169,24 +169,23 @@ jobs:
       - name: Patch Cypress spawn to add --disable-gpu for CI Electron
         working-directory: frontend
         run: |
-          node -e "
-            const fs = require('fs');
-            const f = 'node_modules/cypress/lib/exec/spawn.js';
-            let s = fs.readFileSync(f, 'utf8');
-            const re = /electronArgs\\.push\\('--no-sandbox'\\);/;
-            if (s.includes('--disable-dev-shm-usage')) {
-              console.log('spawn.js already patched');
-            } else if (re.test(s)) {
-              s = s.replace(re,
-                \"electronArgs.push('--no-sandbox'); electronArgs.push('--disable-gpu'); electronArgs.push('--disable-dev-shm-usage');\"
-              );
-              fs.writeFileSync(f, s);
-              console.log('spawn.js patched OK');
-            } else {
-              console.error('Pattern not found in spawn.js!');
-              process.exit(1);
-            }
-          "
+          python3 - <<'PYEOF'
+          import sys
+          f = 'node_modules/cypress/lib/exec/spawn.js'
+          s = open(f, encoding='utf-8').read()
+          PAT = "electronArgs.push('--no-sandbox');"
+          REP = "electronArgs.push('--no-sandbox'); electronArgs.push('--disable-gpu'); electronArgs.push('--disable-dev-shm-usage');"
+          if '--disable-dev-shm-usage' in s:
+              print('already patched'); sys.exit(0)
+          if PAT not in s:
+              # show surrounding context for diagnosis
+              idx = s.find('electronArgs')
+              print('WARN: pattern not found. Sample:', repr(s[idx:idx+120]) if idx>=0 else 'electronArgs not found!')
+              sys.exit(1)
+          s = s.replace(PAT, REP, 1)
+          open(f, 'w', encoding='utf-8').write(s)
+          print('Patched OK:', REP[:80])
+          PYEOF
 
       - name: Run frontend server in background
         working-directory: frontend
