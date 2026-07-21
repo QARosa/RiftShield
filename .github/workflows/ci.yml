@@ -46,8 +46,8 @@ jobs:
         working-directory: backend
         run: |
           pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install pytest pytest-asyncio httpx pytest-cov ruff
+          pip install --no-cache-dir -r requirements.txt
+          pip install --no-cache-dir pytest==8.3.4 pytest-asyncio==0.25.3 httpx pytest-cov ruff
 
       - name: Lint backend (ruff)
         working-directory: backend
@@ -61,12 +61,10 @@ jobs:
           done
           echo "MongoDB not ready" && exit 1
 
-      - name: Verify test collection
-        working-directory: backend
-        run: python -m pytest src/ --collect-only -q -p no:flask
-
       - name: Run pytest
         working-directory: backend
+        env:
+          PYTHONPATH: src
         run: python -m pytest src/ -v -p no:flask --tb=short --junitxml=pytest-results.xml --cov=src --cov-report=term-missing --cov-fail-under=50
 
       - name: Upload pytest results
