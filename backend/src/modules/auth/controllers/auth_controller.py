@@ -39,13 +39,22 @@ def _set_auth_cookies(response: Response, access_token: str, refresh_token: str)
 async def register(data: RegisterInput, response: Response) -> dict:
     result = await auth_service.register_user(data)
     _set_auth_cookies(response, result["accessToken"], result["refreshToken"])
-    return {"user": result["user"].model_dump()}
+    payload = {"user": result["user"].model_dump()}
+    # Expose tokens outside production so E2E (Cypress) can cy.setCookie reliably
+    if not settings.is_production:
+        payload["accessToken"] = result["accessToken"]
+        payload["refreshToken"] = result["refreshToken"]
+    return payload
 
 
 async def login(data: LoginInput, response: Response) -> dict:
     result = await auth_service.login_user(data)
     _set_auth_cookies(response, result["accessToken"], result["refreshToken"])
-    return {"user": result["user"].model_dump()}
+    payload = {"user": result["user"].model_dump()}
+    if not settings.is_production:
+        payload["accessToken"] = result["accessToken"]
+        payload["refreshToken"] = result["refreshToken"]
+    return payload
 
 
 async def refresh(response: Response, refresh_token: str | None = None) -> dict:

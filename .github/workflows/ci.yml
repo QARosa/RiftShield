@@ -180,10 +180,25 @@ jobs:
             -X POST http://127.0.0.1:3000/api/auth/login \
             -H 'Content-Type: application/json' \
             -d '{"email":"test@riftshield.com","password":"test123"}')
-          echo "Login HTTP status: $code"
+          echo "Direct login HTTP status: $code"
           cat /tmp/login.json
           test "$code" = "200"
-          python -c "import json; d=json.load(open('/tmp/login.json')); assert d['user']['email']=='test@riftshield.com', d"
+          python -c "import json; d=json.load(open('/tmp/login.json')); assert d['user']['email']=='test@riftshield.com'; assert 'accessToken' in d, d"
+
+      - name: Smoke test — Vite proxy login
+        run: |
+          code=$(curl -s -o /tmp/proxy-login.json -w "%{http_code}" \
+            -X POST http://127.0.0.1:1999/api/auth/login \
+            -H 'Content-Type: application/json' \
+            -d '{"email":"test@riftshield.com","password":"test123"}')
+          echo "Proxy login HTTP status: $code"
+          cat /tmp/proxy-login.json
+          test "$code" = "200"
+          python -c "import json; d=json.load(open('/tmp/proxy-login.json')); assert 'accessToken' in d, d"
+
+      - name: Cypress auth smoke spec
+        working-directory: frontend
+        run: npx cypress run --browser chrome --headless --spec cypress/e2e/auth.cy.ts
 
       - name: Run Cypress E2E
         working-directory: frontend
@@ -198,7 +213,7 @@ jobs:
             echo "## Cypress output (tail)"
             echo ""
             echo '```'
-            tail -n 100 /tmp/cypress-out.txt 2>/dev/null || echo "(no cypress output)"
+            tail -n 120 /tmp/cypress-out.txt 2>/dev/null || echo "(no cypress output)"
             echo '```'
             echo ""
             echo "## Screenshots"
@@ -206,6 +221,14 @@ jobs:
             find frontend/cypress/screenshots -type f 2>/dev/null | sort || echo "(none)"
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload Cypress console log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cypress-console-log
+          path: /tmp/cypress-out.txt
+          if-no-files-found: ignore
 
       - name: List failed Cypress screenshots
         if: failure()

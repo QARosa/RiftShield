@@ -20,16 +20,46 @@ declare global {
   }
 }
 
+function applyAuthCookiesFromLoginBody(body: {
+  accessToken?: string;
+  refreshToken?: string;
+}) {
+  if (body.accessToken) {
+    cy.setCookie("accessToken", body.accessToken, {
+      path: "/",
+      httpOnly: true,
+      secure: false,
+      sameSite: "lax",
+    });
+  }
+  if (body.refreshToken) {
+    cy.setCookie("refreshToken", body.refreshToken, {
+      path: "/api/auth",
+      httpOnly: true,
+      secure: false,
+      sameSite: "lax",
+    });
+  }
+}
+
 /**
- * UI login through Vite (/api proxy) so the browser cookie jar gets HttpOnly
- * cookies on the same origin as cy.visit (baseUrl :1999).
- * cy.request to :3000 stores cookies under a different origin and breaks CI.
+ * Login via same-origin /api (Vite proxy) + explicit cy.setCookie from JSON tokens.
+ * HttpOnly Set-Cookie via cy.request alone is unreliable across CI proxy setups.
  */
 Cypress.Commands.add("loginAsTestAdmin", () => {
-  cy.visit("/");
-  cy.get("#email", { timeout: 15000 }).should("be.visible").clear().type(ADMIN_EMAIL);
-  cy.get("#password").clear().type(ADMIN_PASSWORD);
-  cy.get('button[type="submit"]').click();
+  cy.request({
+    method: "POST",
+    url: "/api/auth/login",
+    body: { email: ADMIN_EMAIL, password: ADMIN_PASSWORD },
+    failOnStatusCode: true,
+  }).then((res) => {
+    expect(res.status).to.eq(200);
+    expect(res.body).to.have.property("user");
+    expect(res.body).to.have.property("accessToken");
+    applyAuthCookiesFromLoginBody(res.body);
+  });
+
+  cy.visit("/dashboard");
   cy.url({ timeout: 20000 }).should("include", "/dashboard");
   cy.contains(/dashboard|painel|an[aá]lise/i, { timeout: 15000 }).should(
     "be.visible",
@@ -37,19 +67,23 @@ Cypress.Commands.add("loginAsTestAdmin", () => {
 });
 
 Cypress.Commands.add("createAdminInvite", () => {
-  // Authenticate in the browser first (cookies on :1999), then call invite via proxy
-  cy.visit("/");
-  cy.get("#email", { timeout: 15000 }).should("be.visible").clear().type(ADMIN_EMAIL);
-  cy.get("#password").clear().type(ADMIN_PASSWORD);
-  cy.get('button[type="submit"]').click();
-  cy.url({ timeout: 20000 }).should("include", "/dashboard");
-
   return cy
     .request({
       method: "POST",
-      url: "/api/auth/invite",
+      url: "/api/auth/login",
+      body: { email: ADMIN_EMAIL, password: ADMIN_PASSWORD },
       failOnStatusCode: true,
     })
+    .then((res) => {
+      applyAuthCookiesFromLoginBody(res.body);
+    })
+    .then(() =>
+      cy.request({
+        method: "POST",
+        url: "/api/auth/invite",
+        failOnStatusCode: true,
+      }),
+    )
     .then((response) => {
       expect(response.body.invite.code).to.be.a("string").and.not.be.empty;
       const code = response.body.invite.code as string;
