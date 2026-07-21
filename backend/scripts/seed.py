@@ -24,7 +24,6 @@ async def seed_users() -> None:
         email="test@riftshield.com",
         password=hashed_password.decode("utf-8"),
         role="ADMIN",
-        is_active=True,
     )
     await admin_user.insert()
     print(f"-> Created admin user: {admin_user.email}")

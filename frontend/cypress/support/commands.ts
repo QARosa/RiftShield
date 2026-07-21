@@ -15,15 +15,26 @@ declare global {
 }
 
 Cypress.Commands.add("loginAsTestAdmin", () => {
-  cy.visit("/");
-  cy.get("#email").clear().type(ADMIN_EMAIL);
-  cy.get("#password").clear().type(ADMIN_PASSWORD);
-  cy.get('button[type="submit"]').click();
-  cy.url().should("include", "/dashboard", { timeout: 15000 });
+  const apiUrl = (Cypress.env("API_URL") as string) || "http://127.0.0.1:3000";
+
+  // API login is more reliable in CI than UI form (cookies shared across localhost ports)
+  cy.request({
+    method: "POST",
+    url: `${apiUrl}/api/auth/login`,
+    body: { email: ADMIN_EMAIL, password: ADMIN_PASSWORD },
+    failOnStatusCode: true,
+  }).then((res) => {
+    expect(res.status).to.eq(200);
+    expect(res.body).to.have.property("user");
+  });
+
+  cy.visit("/dashboard");
+  cy.url({ timeout: 15000 }).should("include", "/dashboard");
+  cy.contains(/dashboard|painel|an[aá]lise/i, { timeout: 15000 }).should("be.visible");
 });
 
 Cypress.Commands.add("createAdminInvite", () => {
-  const apiUrl = Cypress.env("API_URL") as string;
+  const apiUrl = (Cypress.env("API_URL") as string) || "http://127.0.0.1:3000";
 
   return cy
     .request({

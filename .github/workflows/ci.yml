@@ -119,11 +119,12 @@ jobs:
       DATABASE_URL: mongodb://127.0.0.1:27017/riftshield_test
       JWT_SECRET: ci-jwt-secret-minimum-32-characters-long
       JWT_REFRESH_SECRET: ci-jwt-refresh-secret-minimum-32-chars
-      FRONTEND_URL: http://localhost:1999
+      FRONTEND_URL: http://127.0.0.1:1999
       PORT: 3000
       NODE_ENV: test
       # Cypress Env
-      CYPRESS_BASE_URL: http://localhost:1999
+      CYPRESS_BASE_URL: http://127.0.0.1:1999
+      CYPRESS_API_URL: http://127.0.0.1:3000
 
     steps:
       - uses: actions/checkout@v4
@@ -171,11 +172,28 @@ jobs:
 
       # ─── Wait & Run Tests ───────────────────────────────────
       - name: Wait for services to be ready
-        run: npx wait-on http-get://127.0.0.1:3000/api/health http-get://127.0.0.1:1999 --timeout 60000
+        run: npx wait-on http-get://127.0.0.1:3000/api/health http-get://127.0.0.1:1999 --timeout 90000
+
+      - name: Smoke test — seeded admin login
+        run: |
+          code=$(curl -s -o /tmp/login.json -w "%{http_code}" \
+            -X POST http://127.0.0.1:3000/api/auth/login \
+            -H 'Content-Type: application/json' \
+            -d '{"email":"test@riftshield.com","password":"test123"}')
+          echo "Login HTTP status: $code"
+          cat /tmp/login.json
+          test "$code" = "200"
+          python -c "import json; d=json.load(open('/tmp/login.json')); assert d['user']['email']=='test@riftshield.com', d"
 
       - name: Run Cypress E2E
         working-directory: frontend
-        run: npx cypress run --browser chrome --headless
+        run: npx cypress run --browser chrome --headless --reporter spec
+
+      - name: List failed Cypress screenshots
+        if: failure()
+        run: |
+          echo "=== Screenshots ==="
+          find frontend/cypress/screenshots -type f 2>/dev/null | sort || true
 
       - name: Upload Cypress screenshots on failure
         if: failure()
