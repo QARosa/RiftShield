@@ -292,12 +292,63 @@ npx cypress run --spec cypress/e2e/checklist_manual.cy.ts --browser chrome --hea
 
 ---
 
-## 10. Changelog do documento
+## 10. Investigação — E2E "verde local, vermelho no pipeline" (2026-07-22)
+
+### 10.1 Contexto
+
+Após corrigir um bug de "falso verde" no job `E2E (Cypress · Real Environment)` (o CI reportava `success` mesmo com testes falhando, por captura incorreta do exit code do Cypress no `ci.yml`), a execução real do pipeline passou a reportar o status verdadeiro: **exit code 27 → 27 de 45 testes falhando**, enquanto a mesma suíte passava 100% localmente. Investigação completa em [`RS-TESTS`](https://github.com/QARosa/RiftShield/tree/RS-TESTS), runs [#31](https://github.com/QARosa/RiftShield/actions/runs/29874601067) → [#32](https://github.com/QARosa/RiftShield/actions/runs/29880882027).
+
+### 10.2 Causa raiz #1 (dominante) — idioma padrão dependente do locale do runner
+
+`LanguageContext.tsx` decide o idioma inicial assim:
+
+```ts
+const saved = localStorage.getItem("rift_lang");
+if (saved === "pt-BR" || saved === "en-US") return saved;
+return navigator.language.startsWith("pt") ? "pt-BR" : "en-US";
+```
+
+Como nenhum hook do Cypress definia `rift_lang` antes da primeira renderização, o idioma inicial dependia do locale do **sistema operacional/navegador** que executa os testes:
+
+- **Máquina local (Windows, locale `pt-BR`)** → app carrega em português → specs (que assumem cópia em PT por padrão) passam.
+- **Runner `ubuntu-latest` do GitHub Actions (locale `en-US`)** → app carrega em inglês → todas as asserções de texto/`aria-label` em português falham (`"Detecção de Ameaças"`, `"Registre-se"`, `"Abrir Hermes"`, `"Total de Análises"`, etc.).
+
+**Evidência empírica:** forçando `--lang=en-US` no Chrome local (simulando o runner do CI) sem a correção, os mesmos padrões de falha do CI reapareceram localmente (`auth.cy.ts` 3/4 falhando, `checklist_manual.cy.ts` 4/11 falhando, `dashboard.cy.ts` com falhas nos KPIs). Após a correção, a suíte completa passou 45/45 **tanto em `pt-BR` quanto em `--lang=en-US`**, comprovando que o fix remove a dependência do locale.
+
+**Correção** (`frontend/cypress/support/e2e.ts`): forçar `rift_lang=pt-BR` via `Cypress.on("window:before:load", ...)` em toda carga de página, em todos os specs, independente do locale do runner.
+
+### 10.3 Causa raiz #2 (pontual) — asserção ambígua em viewport mobile
+
+`§10-09 — Responsividade mobile (sidebar)` falhava mesmo localmente: `loginAsTestAdmin()` (usado por todos os specs com backend real) validava a página logada com `cy.contains(/dashboard|painel|an[aá]lise/i)`, que também casa com os itens de navegação da sidebar (`"Dashboard"`, `"Análise de Diagramas"`). Em viewport mobile esses itens ficam em `display:none` (dentro do drawer recolhido), então o Cypress podia casar com um elemento oculto e expirar o timeout mesmo com o dashboard carregado corretamente.
+
+**Correção** (`frontend/cypress/support/commands.ts`): escopar a asserção ao heading da página (`cy.contains("h2", /dashboard|painel/i)`), que é sempre visível independente do viewport.
+
+### 10.4 Validação e resultado
+
+| Etapa | Resultado |
+|---|---|
+| Local, Chrome headless, locale `pt-BR` (antes da correção) | 44/45 ✅ (1 falha: §10-09, causa raiz #2) |
+| Local, Chrome headless, `--lang=en-US` forçado (antes da correção) | Múltiplas falhas — reproduz o padrão do CI |
+| Local, Chrome headless, `pt-BR` (depois da correção) | **45/45 ✅** |
+| Local, Chrome headless, `--lang=en-US` forçado (depois da correção) | **45/45 ✅** |
+| CI — run [#32](https://github.com/QARosa/RiftShield/actions/runs/29880882027) (`ddad87a`), job `E2E (Cypress · Real Environment)` | **success** — sem screenshots de falha (step `Upload Cypress screenshots on failure` = *skipped*) |
+
+**Commits:** `fix(e2e): force pt-BR language regardless of CI runner locale`, `fix(e2e): scope loginAsTestAdmin dashboard check to page heading` — 2 commits pequenos, um por causa raiz, um único novo run de CI para validar ambos.
+
+### 10.5 Lição para o backlog de QA
+
+- Nenhuma correção de conteúdo dos 9 specs foi necessária (a hipótese inicial de "drift de copy/seletor por spec" não se confirmou) — a causa era 100% ambiental (locale do runner), não drift de UI.
+- Recomenda-se manter a skill [`ci-e2e-stabilization`](.cursor/skills/ci-e2e-stabilization/SKILL.md) atualizada com este caso: "specs passam local e falham 100% deterministicamente no CI" → suspeitar primeiro de diferenças de ambiente (locale, timezone, viewport, fonte) antes de reescrever specs.
+
+---
+
+## 11. Changelog do documento
 
 | Versão | Data | Alterações |
 |---|---|---|
 | 1.0 | 2026-07-20 | Análise inicial — 176 testes, gaps identificados |
 | 1.1 | 2026-07-20 | Implementações: RBAC, security headers, lint, ErrorBoundary, checklist §10 E2E, smoke YOLO — **196 testes** |
+| 1.2 | 2026-07-22 | Investigação e correção do pipeline E2E: causa raiz de locale (idioma padrão dependente de `navigator.language` no runner `ubuntu-latest`) + asserção ambígua em viewport mobile. CI `E2E (Cypress · Real Environment)` voltou a **45/45 passing** (run #32) sem alterar conteúdo dos specs. |
 
 ---
 
