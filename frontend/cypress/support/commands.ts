@@ -61,7 +61,12 @@ Cypress.Commands.add("loginAsTestAdmin", () => {
 
   cy.visit("/dashboard");
   cy.url({ timeout: 20000 }).should("include", "/dashboard");
-  cy.contains(/dashboard|painel|an[aá]lise/i, { timeout: 15000 }).should(
+  // Scope to the page heading (<h2>) instead of a bare text match: sidebar
+  // nav items share the same words ("Dashboard", "Análise de Diagramas")
+  // and stay in the DOM (display:none) behind the mobile hamburger menu,
+  // so an unscoped cy.contains() can match a hidden element on mobile
+  // viewports and time out even though the dashboard loaded correctly.
+  cy.contains("h2", /dashboard|painel/i, { timeout: 15000 }).should(
     "be.visible",
   );
 });
